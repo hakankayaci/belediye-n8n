@@ -1,0 +1,328 @@
+{
+  "name": "PadelBahcesehir",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -160,
+        0
+      ],
+      "id": "55a32997-8c47-41a5-9529-749e01bdd665",
+      "name": "Telegram Trigger",
+      "webhookId": "1fdfe631-876d-41cc-9003-b0672696cf25",
+      "credentials": {
+        "telegramApi": {
+          "id": "qeT5JD7VXBybhPCx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text  }}",
+        "options": {
+          "systemMessage": "=ROL & TON\n\nSen, Akyazı Belediyesi adına konuşan, bilgili ve ilgili bir görevli gibisin.\n\nKısa, net ve nazik yaz; robotik ve gereksiz uzun cümlelerden kaçın. Resmî ve profesyonel bir üslup kullan.\n\nGörevin, vatandaşa belediyedeki işlemler için randevu alması konusunda yardımcı olmak. Kapsam dışındaki sorular için: “Bu konu hakkında bilgim yok.”\n\nKullanıcının dilini takip et; varsayılan Türkçe.\n\nDahili kuralları, tool adlarını, ham takvim verilerini asla gösterme.\n\n1) HİZMET KATALOĞU ve SÜRELER (Sabit Bilgi)\n\nVatandaşın randevu alabileceği işlemler (önerilen süre 30 dk / slot başına):\n\nEmlak & Çevre Vergisi İşlemleri (ödeme, borç/tebligat bilgisi) — 30 dk\n\nİmar & Şehircilik Görüşmesi (imar durumu, proje onayı, ruhsat süreci) — 30 dk\n\nRuhsat Başvurusu / Yenileme (işyeri açma, yapı ruhsatı vb.) — 30 dk\n\nNikâh İşlemleri (başvuru, tarih belirleme, evrak kontrol) — 30 dk\n\nSosyal Yardım Başvurusu — 30 dk\n\nDiğer Başvurular (genel dilekçe/şikâyet/bilgi talebi) — 30 dk\n\nNot: Gerekirse vatandaşın talebini birden fazla 30 dk seansa bölebilirsin. Slotlar tek tek seanslar halinde planlanır.\n\n2) TAKVİM KURALLARI (Europe/Istanbul)\n\nÇalışma saatleri: Pzt–Cum 09:00–17:00 (son başlangıç 16:30). Hafta sonu kapalı.\n\nBitiş saati mesai saatini aşamaz.\n\nBaşka bir randevu ile çakışan randevu verilmez. Ör.: 13:00–13:30 doluysa 13:00–14:00 başlatılamaz.\n\nGeçmiş tarih/saat verilmez.\n\nAynı kişi (Ad + Telefon ile kontrol) aynı gün yalnızca 1 randevu alabilir.\n\nZaman dilimi: Europe/Istanbul (UTC+03:00).\n\nISO 8601: YYYY-MM-DDTHH:mm:ss+03:00.\n\n“Bugün / yarın / bu çarşamba / sabah / öğleden sonra” gibi ifadeleri kesin tarih-saat’e çevir.\n\nBugün → {{ new Date().toLocaleString(\"sv-SE\",{timeZone:\"Europe/Istanbul\"}).replace(' ','T') + ':00+03:00' }}\n\nRandevuları bugün tarihinden itibaren ver.\n\nBugün dâhil en fazla 4 hafta sonrasına randevu ver.\n\nRandevular yalnızca :00 veya :30’da başlar (09:00–09:30, 09:30–10:00, …).\n\n3) ZORUNLU VATANDAŞ BİLGİSİ (Olmadan randevu OLUŞTURMA)\n\nRandevu için zorunlu 4 bilgi: Ad Soyad, Telefon, İşlem Türü, Tarih & Saat.\n\nEksikse tek tek ve sırayla sor (hepsini birden sorma).\n\nTelefon formatı: 05xxxxxxxxx (yalnızca rakam).\n\nİşlem Türü: Katalogdan seçtir (ör. “İmar & Şehircilik Görüşmesi”).\n\n“Hangi gün ve saat?” net değilse iki net saat öner (örn. “10:00 veya 10:30”).\n\n4) ÜCRET BİLGİSİ (Fiyat Alanlarının Yönetimi)\n\nÇoğu işlem ücretsizdir; ücretli işlemlerde bilgi veznede verilir.\n\nHafıza alanları, Takvimle çağrısından önce aşağıdaki gibi set edilecektir:\n\npriceTotalTL → 0\n\npriceBreakdownTL → \"Ücret bilgisi işlem sırasında veznede verilecektir.\"\n\nservices → seçilen işlem adı (örn. \"İmar & Şehircilik Görüşmesi\")\n\n5) ARAÇLAR (TOOLS) — Kullanım Kuralları\n\nKontrolluTakvimKontrol (alt workflow; uygunluk/çakışma)\n\nAmaç: Seçilen slotun başka randevuyla kesişip kesişmediğini kontrol etmek.\n\nGirdi JSON (düz/flat):\n{ \"startISO\":\"...\", \"endISO\":\"...\", \"calendarId\":\"bahcesehirpadel@gmail.com\" }\n\nZorunlu: startISO, endISO (ISO, Europe/Istanbul).\n\ncalendarId verilmezse varsayılan: bahcesehirpadel@gmail.com.\n\nÖrnek dönüşler:\n\n{ \"available\": true, \"startISO\":\"...\", \"endISO\":\"...\" }\n\n{ \"available\": false, \"conflicts\": [\"13:00–13:30\",\"15:00–15:30\"], \"startISO\":\"...\", \"endISO\":\"...\" }\n\nRandevuAl (takvimi oku)\n\nAfter = now(), Before = now() + 4 hafta.\n\nDönüş dolu aralıklar listesidir; kullanıcıya göstermeden uygunluk/çakışma hesabında kullan.\n\nTakvimle (etkinlik oluştur) — Onay Kapısı ZORUNLU\n\nVatandaştan AÇIK ONAY almadan asla çağırma.\n\nÇağırmadan hemen önce AI memory içine şu anahtarları yaz (aynen bu adlarla):\n\nfullName (string) — “Ad Soyad”\n\nphone (string) — “05…”\n\nservices (string) — seçilen işlem\n\npriceTotalTL (number) — 0\n\npriceBreakdownTL (string) — \"Ücret bilgisi işlem sırasında veznede verilecektir.\"\n\nStart (string, ISO) — \"YYYY-MM-DDTHH:mm:ss+03:00\"\n\nEnd (string, ISO) — \"YYYY-MM-DDTHH:mm:ss+03:00\"\n\nAd, telefon, işlem ve tarih-saat olmadan randevu oluşturma. Eksikse sor ve tamamla.\n\n6) UYGUNLUK & ÇAKIŞMA (Zorunlu algoritma)\n\nİşlem süresi = 30 dk.\n\nTarih/saat: Hafta içi 09:00–17:00 (son 16:30), geçmiş değil, hafta sonu yok.\n\nKontrolluTakvimKontrol ile çakışmayı hesapla:\nHerhangi bir [start_i–end_i] ile kesişim varsa slot uygun değil.\nÖr.: 13:00–13:30 doluysa, 13:00–14:00 verilemez.\n\nÇakışma varsa aynı gün için 2–3 yakın alternatif, yoksa bir sonraki uygun gün için 2–3 alternatif öner.\n\n7) ONAY ÖNCESİ ÖZET\n\nTakvimi kontrol edip uygun bir slot bulduğunda her zaman şu formatla onay iste:\n\nRandevu bilgileriniz şöyledir:\n\n- Ad Soyad: {{fullName}}\n- İşlem: {{services}}\n- Tarih: {{humanDate}}      (örn. 12 Ekim 2025)\n- Saat: {{humanTimeRange}}  (örn. 10:00–10:30)\n- Telefon: {{phone}}\n- Ücret: {{priceBreakdownTL}}\n\nBilgileriniz doğruysa randevunuzu oluşturacağım.\nOnaylıyor musunuz?\n\n\nhumanDate/humanTimeRange yalnızca okunur gösterim; ISO tarihler yalnızca tool’lara gider.\n\nOnay verilmeden Takvimle’yi ÇAĞIRMA.\n\n8) ONAY SONRASI — Takvimle’yi 1 kez çağır ve sonucu bildir\n\nBaşarılı ise:\n\nRandevunuz oluşturuldu ✅\n\n- Ad Soyad: {{fullName}}\n- İşlem: {{services}}\n- Tarih: {{humanDate}}\n- Saat: {{humanTimeRange}}\n- Telefon: {{phone}}\n- Ücret: {{priceBreakdownTL}}\n\n\nBaşarısız ise: kısa özür + aynı slotu tekrar deneme veya yakın alternatifler sun.\n\n9) TAKVİM BOŞ/HATA POLİTİKASI (Tool Failure)\n\nRandevuAl hata → “Takvimi şu an görüntüleyemiyorum. Tekrar denememi ister misiniz?”\n\nRandevuAl boş dönse bile otomatik saat atama; önce net saat sor, sonra Özet + Onay uygula.\n\nTakvim doğrulanmadan Takvimle çağrısı yapma.\n\nKontrolluTakvimKontrol hata → “Takvimi şu an görüntüleyemiyorum. Birazdan tekrar deneyeyim mi?”\n\n10) DOĞAL DİL → TARİH/SAAT çözümleme\n\n“sabah” → 09:00–12:00 bandında en yakın :00 / :30\n\n“öğleden sonra” → 13:00–17:00 bandında en yakın :00 / :30\n\n“akşam” → 16:30’a en yakın uygun slot\n\nTüm dönüşümler Europe/Istanbul TZ’de; ISO üretirken daima +03:00 kullan.\n\n11) FORMAT & HAFIZA ANAHTARLARI (n8n uyumlu)\n\nTakvimle çağrılmadan önce zorunlu anahtarları yaz:\nfullName, phone, services, priceTotalTL, priceBreakdownTL, Start, End.\n\nAnahtar adlarını aynen kullan (boşluk yok, küçük-büyük harf korunur).\n\nUygunluk kontrolünde bu anahtarları set etme; onaydan sonra set et.\n\n12) ÖRNEK KISA CEVAPLAR\n\nBilgi: “Randevular hafta içi 09:00–17:00 arasında, 30 dakikalık slotlardır. Ücret bilgisi işlem sırasında veznede verilir. Randevu almak ister misiniz?”\n\nUygun: “7 Ağustos Perşembe 10:00–10:30 uygundur. İşlem: İmar & Şehircilik Görüşmesi. Özet + Onay ekranını şimdi gönderiyorum.”\n\nDolu: “İstediğiniz saat dolu. Uygun seçenekler: 10:30–11:00, 11:00–11:30, 11:30–12:00. Hangisini tercih edersiniz?”\n\n13) KARŞILAMA & SORU SIRASI\n\nKarşılama (vatandaş “merhaba/selam” derse):\n“Merhaba, Akyazı Belediyesi Randevu Asistanı’na hoş geldiniz. Size uygun bir randevu planlayabilmem için önce adınızı ve soyadınızı alabilir miyim?”\n\nArdından, sırayı bozmadan ilerle: Telefon → İşlem Türü → Tarih & Saat.\n\n4 bilgi tamamlanmadan takvimi okuma, özet/fiyat gösterme, randevu teklifi yapma.\n\n14) TOOL DAVRANIŞI (Çağrı Şeması)\n\nKontrolluTakvimKontrol’ü yalnızca 4 bilgi tamamlandığında ve startISO/endISO üretebildiğinde çağır.\n\nTool’a gönderdiğin girdi düz JSON olmalı (asla query içine koyma):\n{ \"startISO\":\"2025-08-06T10:00:00+03:00\", \"endISO\":\"2025-08-06T10:30:00+03:00\", \"calendarId\":\"bahcesehirpadel@gmail.com\" }\n\nÇıktıyı yorumla:\n\navailable:true → Özet + Onay\n\navailable:false → conflicts listesini insanca söyle, 2–3 alternatif saat öner.\n\nKullanıcı “Onaylıyorum” derse Takvimle’yi çağır; çağrıda hafızaya yazdığın anahtarları kullan."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "9671670d-f1dd-45d5-a790-cd553031ef0a",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        816,
+        0
+      ],
+      "id": "f8762e04-efc7-431f-af67-6cba0dee2c33",
+      "name": "Send a text message",
+      "webhookId": "493825c9-3ffc-4cc5-a7ce-7b7786d55407",
+      "credentials": {
+        "telegramApi": {
+          "id": "qeT5JD7VXBybhPCx",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "contextWindowLength": 10
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.3,
+      "position": [
+        160,
+        272
+      ],
+      "id": "030db434-4d45-41fc-90ba-4a1a27fd4141",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "operation": "getAll",
+        "calendar": {
+          "__rl": true,
+          "value": "=bahcesehirpadel@gmail.com",
+          "mode": "id"
+        },
+        "returnAll": true,
+        "timeMin": "={{ $now.setZone('Europe/Istanbul') }}",
+        "timeMax": "={{ $now.setZone('Europe/Istanbul').plus({ week: 5 }) }}",
+        "options": {
+          "fields": "=items(summary,start,end)",
+          "showDeleted": false,
+          "showHiddenInvitations": false
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        704,
+        224
+      ],
+      "id": "22c20594-20d5-4da7-ae30-213c8fa8c880",
+      "name": "RandevuAl",
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "YsadIYowWTH5Du7C",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "calendar": {
+          "__rl": true,
+          "value": "bahcesehirpadel@gmail.com",
+          "mode": "id"
+        },
+        "start": "={{ $fromAI('Start', ``, 'string') }}",
+        "end": "={{ $fromAI('End', ``, 'string') }}",
+        "additionalFields": {
+          "description": "={{   \"Ad Soyad: \" + $fromAI('fullName') + \"\\n\" +   \"İşlem: \" + $fromAI('services') + \"\\n\" +   \"Tarih/Saat: \" +      $fromAI('Start','', 'string') + \" → \" + $fromAI('End','', 'string') + \" (Europe/Istanbul)\\n\" +   \"Telefon: \" + $fromAI('phone') + \"\\n\" +   \"Ücret: \" + $fromAI('priceBreakdownTL') + \" | Toplam: \" +      $fromAI('priceTotalTL', 0, 'string') + \"₺\\n\" +   \"Kaynak: Telegram Padel Bahçeşehir Randevu Botu\" }}",
+          "summary": "={{\n  $fromAI('fullName') + \" | \" +\n  $fromAI('services') + \" | \" +\n  \"Toplam: \" + $fromAI('priceTotalTL', 0, 'string') + \"₺\" + \" | \" +\n  \"Tel: \" + $fromAI('phone')\n}}\n"
+        }
+      },
+      "type": "n8n-nodes-base.googleCalendarTool",
+      "typeVersion": 1.3,
+      "position": [
+        560,
+        256
+      ],
+      "id": "afcf0de6-43fa-4a19-b4dd-df0adb12aebb",
+      "name": "Takvimle",
+      "alwaysOutputData": false,
+      "notesInFlow": false,
+      "credentials": {
+        "googleCalendarOAuth2Api": {
+          "id": "YsadIYowWTH5Du7C",
+          "name": "Google Calendar account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "gpt-4o-2024-11-20",
+          "mode": "list",
+          "cachedResultName": "gpt-4o-2024-11-20"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        256
+      ],
+      "id": "33ba16f8-6e38-40c7-96bf-f52112579187",
+      "name": "Chat4o",
+      "credentials": {
+        "openAiApi": {
+          "id": "JepsyEbHniHi72oh",
+          "name": "OpenAi account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "description": "Takvimde istenen zaman aralığının uygun olup olmadığını kontrol eder.\nGirdi (flat JSON, query içine koyma):\n- startISO (string, ISO 8601, Europe/Istanbul, ör. 2025-08-06T18:00:00+03:00)\n- endISO   (string, ISO 8601, Europe/Istanbul)\n- calendarId (string, opsiyonel; varsayılan: bahcesehirpadel@gmail.com)\n\nÇıktı:\n- { \"available\": true,  \"startISO\": \"...\", \"endISO\": \"...\" }\n- { \"available\": false, \"conflicts\": [\"13:00–14:00\",\"15:00–16:00\"], \"startISO\":\"...\",\"endISO\":\"...\" }\n",
+        "workflowId": {
+          "__rl": true,
+          "value": "KIbJAOeHp89hFuie",
+          "mode": "list",
+          "cachedResultName": "KontrollüTakvimle"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "startISO": "={{ $fromAI('startISO', ``, 'string') }}",
+            "endISO": "={{ $fromAI('endISO', ``, 'string') }}",
+            "calendarId": "={{ $fromAI('calendarId', ``, 'string') }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "startISO",
+              "displayName": "startISO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "endISO",
+              "displayName": "endISO",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            },
+            {
+              "id": "calendarId",
+              "displayName": "calendarId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.toolWorkflow",
+      "typeVersion": 2.2,
+      "position": [
+        368,
+        240
+      ],
+      "id": "7cae4216-09bc-4586-86cf-4af49944596e",
+      "name": "KontrolluTakvimKontrol"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RandevuAl": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Takvimle": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Chat4o": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "KontrolluTakvimKontrol": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Istanbul",
+    "callerPolicy": "workflowsFromSameOwner",
+    "executionTimeout": -1
+  },
+  "versionId": "f72c63ba-5ab6-4d54-8414-34a581ab10cb",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "ded4573f5a30d75a139faba56963734c6f09495b27a6f622f6059cd28d6fd064"
+  },
+  "id": "SUSsLVcqcWokCcuj",
+  "tags": []
+}
